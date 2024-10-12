@@ -29,15 +29,19 @@ WHERE ch.active_months = 12;
 
 # Задача 2
 WITH MonthlyData AS (
-    SELECT 
-        DATE_FORMAT(t.date_new, '%Y-%m') AS yearmonth,
-        COUNT(t.Id_check) AS transactions_per_month,
-        AVG(t.Sum_payment) AS avg_check,
-        COUNT(DISTINCT t.ID_client) AS active_clients,
-        SUM(t.Sum_payment) AS total_monthly_sum
-    FROM transactionsinfo t
-    WHERE t.date_new BETWEEN '2015-06-01' AND '2016-06-01'
-    GROUP BY yearmonth
+    SELECT DATE_FORMAT(t.date_new, '%Y-%m') AS yearmonth, c.Gender,
+    COUNT(DISTINCT c.ID_client) AS total_clients,
+    SUM(t.Sum_payment) AS total_payment,
+    ROUND((COUNT(DISTINCT c.ID_client) / (SELECT COUNT(DISTINCT ID_client) 
+                                          FROM customer_info)) * 100, 2) AS percent_clients,
+    ROUND((SUM(t.Sum_payment) / (SELECT SUM(Sum_payment) 
+                                 FROM transactions_info 
+                                 WHERE date_new BETWEEN '2015-06-01' AND '2016-06-01')) * 100, 2) AS percent_payment
+	FROM transactions_info t
+	JOIN customer_info c ON t.ID_client = c.ID_client
+	WHERE t.date_new BETWEEN '2015-06-01' AND '2016-06-01'
+	GROUP BY yearmonth, c.Gender
+	ORDER BY yearmonth, c.Gender
 ),
 YearlyData AS (
     SELECT 
